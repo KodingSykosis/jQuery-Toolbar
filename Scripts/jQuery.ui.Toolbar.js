@@ -27,7 +27,9 @@
                 .css(
                     this.element
                         .css(['margin', 'width'])
-                ).css('position', 'relative');
+                ).css({
+                    position: 'relative'
+                });
             
             this.element
                 .css('margin', '0')
@@ -35,8 +37,14 @@
 
             this.element
                 .children()
-                .addClass('ui-toolbar-item');
-
+                .addClass('ui-toolbar-item')
+                .children('ul')
+                .addClass('ui-toolbar-submenu')
+                .parent()
+                .append('<em class="ui-icon ui-icon-triangle-1-s"></em>')
+                .hover($.proxy(this._OnSubMenuMouseEnter, this),
+                       $.proxy(this._onSubMenuMouseLeave, this));
+            
             if (this.options.scrollable) {
                 this.initScroll();
             }
@@ -233,6 +241,20 @@
             var elem = this.element;
             var collapse = elem.is('.ui-collapsing,.ui-collapsed');
             this.toggle(collapse);
+        },
+        
+        _OnSubMenuMouseEnter: function (event) {
+            var target = $(event.delegateTarget || event.target);
+            var elem = target.children('.ui-toolbar-submenu');
+            elem.stop()
+                .slideDown(100);
+        },
+        
+        _onSubMenuMouseLeave: function (event) {
+            var target = $(event.delegateTarget || event.target);
+            var elem = target.children('.ui-toolbar-submenu');
+            elem.stop()
+                .slideUp(100);
         }
     });
 })(jQuery);

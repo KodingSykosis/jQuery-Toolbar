@@ -1,4 +1,5 @@
-﻿.ui-toolbar {
+﻿.ui-toolbar,
+.ui-toolbar-submenu {
     list-style: none;
     display: inline-block;
     position: relative;
@@ -7,11 +8,12 @@
     padding: 0;
     margin: 0;
     white-space: nowrap;
-    overflow-x: hidden;
     border: 1px solid #E7E8EC;
+    overflow-x: hidden;
 }
 
 .ui-toolbar-item {
+    position: relative;
     display: inline-block;
     margin: 0;
     padding: 0.5em 1.5em;
@@ -24,6 +26,25 @@
 
 .ui-toolbar-item:first-child {
     border-left: none;
+}
+
+.ui-toolbar-item .ui-toolbar-submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: -1px;
+    -moz-min-width: 100%;
+    -ms-min-width: 100%;
+    -o-min-width: 100%;
+    -webkit-min-width: 100%;
+    min-width: 100%;
+    z-index: 2;
+}
+
+.ui-toolbar-item .ui-toolbar-submenu ~ em {
+    position: absolute;
+    top: 0.5em;
+    right: 0.25em;
 }
 
 .ui-toolbar-scroll-east,
