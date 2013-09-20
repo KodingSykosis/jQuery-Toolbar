@@ -47,8 +47,12 @@
                 .addClass('ui-toolbar-submenu-item')
                 .parents('.ui-toolbar-item:first')
                 .append('<em class="ui-icon ui-icon-triangle-1-s"></em>')
-                .hover($.proxy(this._OnSubMenuMouseEnter, this),
+                .hover($.proxy(this._onSubMenuMouseEnter, this),
                        $.proxy(this._onSubMenuMouseLeave, this));
+
+            this.element
+                .find('a')
+                .click($.proxy(this._onMenuItemClicked, this));
             
             if (this.options.scrollable) {
                 this.initScroll();
@@ -272,7 +276,7 @@
             this.toggle(collapse);
         },
         
-        _OnSubMenuMouseEnter: function (event) {
+        _onSubMenuMouseEnter: function (event) {
             var target = $(event.delegateTarget || event.target);
             if (!this._isVisible(target)) return;
 
@@ -286,6 +290,10 @@
             var elem = target.children('.ui-toolbar-submenu');
             elem.stop()
                 .slideUp(100);
+        },
+        
+        _onMenuItemClicked: function(event) {
+            this._trigger('itemClicked', event);
         }
     });
 })(jQuery);
