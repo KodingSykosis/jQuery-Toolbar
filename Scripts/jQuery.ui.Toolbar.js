@@ -1,5 +1,5 @@
 ﻿(function ($) {
-    var visible = function() { return $(this).css('visibility') === 'visible'; };
+    //var visible = function() { return $(this).css('visibility') === 'visible'; };
 
     $.widget('kodingsykosis.toolbar', {
         options: {
@@ -24,6 +24,7 @@
             
             //Clone layout
             this.wrap
+                .addClass('ui-toolbar-wrap')
                 .css(
                     this.element
                         .css(['margin', 'width'])
@@ -32,7 +33,9 @@
                 });
             
             this.element
-                .css('margin', '0')
+                .css({
+                    margin: '0'
+                })
                 .addClass('ui-toolbar');
 
             this.element
@@ -40,7 +43,9 @@
                 .addClass('ui-toolbar-item')
                 .children('ul')
                 .addClass('ui-toolbar-submenu')
-                .parent()
+                .children('li')
+                .addClass('ui-toolbar-submenu-item')
+                .parents('.ui-toolbar-item:first')
                 .append('<em class="ui-icon ui-icon-triangle-1-s"></em>')
                 .hover($.proxy(this._OnSubMenuMouseEnter, this),
                        $.proxy(this._onSubMenuMouseLeave, this));
@@ -56,8 +61,8 @@
         
         initScroll: function () {
             this.scrollHandles = {
-                west: $('<div class="ui-toolbar-scroll-west ui-widget"><em class="ui-icon ui-icon-triangle-1-w"></em></div>'),
-                east: $('<div class="ui-toolbar-scroll-east ui-widget"><em class="ui-icon ui-icon-triangle-1-e"></em></div>')
+                west: $('<div class="ui-toolbar-scroll-west"><em class="ui-icon ui-icon-triangle-1-w"></em></div>'),
+                east: $('<div class="ui-toolbar-scroll-east"><em class="ui-icon ui-icon-triangle-1-e"></em></div>')
             };
 
             this.wrap
@@ -89,15 +94,17 @@
                 .prepend(this.trigger);
         },
 
-        updScroll: function () {
+        updScroll: function (projectClipping) {
             if (!this.options.scrollable) return;
 
             var visible = this.getVisible();
             var elem = this.element;
             var first = elem.children(".ui-toolbar-item:first");
             var last = elem.children('.ui-toolbar-item:last');
-            var maxScroll = elem.prop('scrollWidth') - elem.width();
-            var scrollable = maxScroll > 0;
+            var elemWidth = elem.outerWidth();
+            var elemPos = elem.position();
+            var maxScroll = -(elem.prop('scrollWidth') - elemWidth);
+            var scrollable = Math.abs(maxScroll) > 0;
             var showWest = false, showEast = false;
             
             if (this.options.autoHide) {
@@ -114,10 +121,10 @@
                 showWest = !first.is(visible);
                 showEast = !last.is(visible);
             } else {
-                showWest = scrollable && elem.scrollLeft() > 0;
-                showEast = scrollable && elem.scrollLeft() < maxScroll;
+                showWest = scrollable && elemPos.left < 0;
+                showEast = scrollable && elemPos.left > maxScroll;
             }
-
+            
             this.scrollHandles
                 .west
                 .toggle(showWest);
@@ -125,6 +132,25 @@
             this.scrollHandles
                 .east
                 .toggle(showEast);
+
+            //calculate the clip, we need the handles visible
+            //so we can get the width
+            var handleWidth = this.scrollHandles.both.outerWidth();
+            var clip = [0, 0, 1000, 0];
+            
+            if (projectClipping) {
+                handleWidth /= 2;
+            }
+            
+            //east
+            clip[1] = (showEast ? elemWidth - handleWidth : elemWidth) - elemPos.left;
+            
+            //west
+            clip[3] = (showWest ? handleWidth : 0) - elemPos.left;
+            elem.css({
+                clip: 'rect(' + clip.join('px,') + 'px)',
+                position: 'absolute'
+            });
 
             this.scrollHandles
                 .both
@@ -139,9 +165,6 @@
                 width =
                     this.element
                         .outerWidth(),
-                scrollLeft =
-                    this.element
-                        .scrollLeft(),
                 items = 
                     this.element
                         .children('.ui-toolbar-item');
@@ -214,17 +237,23 @@
             elem.dequeue(queueName);
         },
 
+        _isVisible: function(elem) {
+            var elemPos = elem.position();
+            var parPos = this.element.position();
+            return 0 <= parPos.left + elemPos.left;
+        },
+
         _onScrollMouseEnter: function (event) {
             var target = $(event.delegateTarget || event.target);
             var elem = this.element;
             var width = elem.width();
             var scrollPos = target.is(this.scrollHandles.west)
                     ? 0
-                    : elem.prop('scrollWidth') - width;
+                    : -(elem.prop('scrollWidth') - width);
 
             this.element
                 .animate({
-                    scrollLeft: scrollPos
+                    left: scrollPos
                 }, {
                     duration: 600,
                     step: $.proxy(this.updScroll, this),
@@ -245,6 +274,8 @@
         
         _OnSubMenuMouseEnter: function (event) {
             var target = $(event.delegateTarget || event.target);
+            if (!this._isVisible(target)) return;
+
             var elem = target.children('.ui-toolbar-submenu');
             elem.stop()
                 .slideDown(100);
